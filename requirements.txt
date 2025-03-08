@@ -29,3 +29,4 @@ langchain
 langchain_community
 sentence_transformers
 codeshield
+unstructured>=0.16.20 # not directly required, pinned by Snyk to avoid a vulnerability
