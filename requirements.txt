@@ -1,4 +1,4 @@
-torch>=2.2
+torch>=2.6.0
 accelerate
 appdirs
 loralib
