@@ -10,3 +10,5 @@ langchain_core
 nbformat>=4.2.0
 ipython
 kaleido
+h11>=0.16.0 # not directly required, pinned by Snyk to avoid a vulnerability
+jupyter-core>=5.8.0 # not directly required, pinned by Snyk to avoid a vulnerability
