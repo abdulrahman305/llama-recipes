@@ -1,3 +1,4 @@
 vllm
 pytest-mock
 auditnlg
+langchain>=0.1.12 # not directly required, pinned by Snyk to avoid a vulnerability
