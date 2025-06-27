@@ -2,3 +2,6 @@ transformers
 rouge
 xopen
 needlehaystack
+langchain>=0.1.12 # not directly required, pinned by Snyk to avoid a vulnerability
+langchain-community>=0.0.28 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
