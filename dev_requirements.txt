@@ -1,3 +1,4 @@
 vllm
 pytest-mock
 auditnlg
+tqdm>=4.66.3 # not directly required, pinned by Snyk to avoid a vulnerability
