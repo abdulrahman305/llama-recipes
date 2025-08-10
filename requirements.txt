@@ -1,4 +1,4 @@
-torch>=2.2
+torch>=2.8.0
 accelerate
 appdirs
 loralib
@@ -8,7 +8,7 @@ black[jupyter]
 datasets
 fire
 peft
-transformers>=4.43.1
+transformers>=4.53.0
 sentencepiece
 py7zr
 scipy
