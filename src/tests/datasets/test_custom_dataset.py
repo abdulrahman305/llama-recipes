@@ -2,6 +2,7 @@
 # This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
 
 import pytest
+from contextlib import nullcontext
 from unittest.mock import patch
 
 from transformers import LlamaTokenizer
@@ -11,7 +12,7 @@ EXPECTED_RESULTS={
         "example_1": "[INST] Who made Berlin [/INST] dunno",
         "example_2": "[INST] Quiero preparar una pizza de pepperoni, puedes darme los pasos para hacerla? [/INST] Claro!",
     },
-    "meta-llama/Meta-Llama-3.1-8B":{
+    "meta-llama/Meta-Llama-3.1-8B-Instruct":{
         "example_1": "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nWho made Berlin<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\ndunno<|eot_id|><|end_of_text|>",
         "example_2": "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nHow to start learning guitar and become a master at it?",
     },
@@ -35,13 +36,13 @@ def check_padded_entry(batch, tokenizer):
 
 @pytest.mark.skip(reason="Flakey due to random dataset order @todo fix order")
 @pytest.mark.skip_missing_tokenizer
-@patch('llama_recipes.finetuning.train')
-@patch('llama_recipes.finetuning.AutoTokenizer')
-@patch('llama_recipes.finetuning.LlamaForCausalLM.from_pretrained')
-@patch('llama_recipes.finetuning.optim.AdamW')
-@patch('llama_recipes.finetuning.StepLR')
+@patch('llama_cookbook.finetuning.train')
+@patch('llama_cookbook.finetuning.AutoTokenizer')
+@patch('llama_cookbook.finetuning.LlamaForCausalLM.from_pretrained')
+@patch('llama_cookbook.finetuning.optim.AdamW')
+@patch('llama_cookbook.finetuning.StepLR')
 def test_custom_dataset(step_lr, optimizer, get_model, tokenizer, train, mocker, setup_tokenizer, llama_version):
-    from llama_recipes.finetuning import main
+    from llama_cookbook.finetuning import main
 
     setup_tokenizer(tokenizer)
 
@@ -51,7 +52,7 @@ def test_custom_dataset(step_lr, optimizer, get_model, tokenizer, train, mocker,
     kwargs = {
         "dataset": "custom_dataset",
         "model_name": llama_version,
-        "custom_dataset.file": "recipes/quickstart/finetuning/datasets/custom_dataset.py",
+        "custom_dataset.file": "getting-started/finetuning/datasets/custom_dataset.py",
         "custom_dataset.train_split": "validation",
         "batch_size_training": 2,
         "val_batch_size": 4,
@@ -95,22 +96,54 @@ def test_custom_dataset(step_lr, optimizer, get_model, tokenizer, train, mocker,
 
 
 
-@patch('llama_recipes.finetuning.train')
-@patch('llama_recipes.finetuning.LlamaForCausalLM.from_pretrained')
-@patch('llama_recipes.finetuning.AutoTokenizer.from_pretrained')
-@patch('llama_recipes.finetuning.optim.AdamW')
-@patch('llama_recipes.finetuning.StepLR')
-def test_unknown_dataset_error(step_lr, optimizer, tokenizer, get_model, train, mocker, llama_version):
-    from llama_recipes.finetuning import main
+@patch('llama_cookbook.finetuning.train')
+@patch('llama_cookbook.finetuning.AutoConfig.from_pretrained')
+@patch('llama_cookbook.finetuning.LlamaForCausalLM.from_pretrained')
+@patch('llama_cookbook.finetuning.AutoTokenizer.from_pretrained')
+@patch('llama_cookbook.finetuning.optim.AdamW')
+@patch('llama_cookbook.finetuning.StepLR')
+def test_unknown_dataset_error(step_lr, optimizer, tokenizer, get_model, get_config, train, mocker, llama_version):
+    from llama_cookbook.finetuning import main
 
     tokenizer.return_value = mocker.MagicMock(side_effect=lambda x: {"input_ids":[len(x)*[0,]], "attention_mask": [len(x)*[0,]]})
     get_model.return_value.get_input_embeddings.return_value.weight.shape = [32000 if "Llama-2" in llama_version else 128256]
+    get_config.return_value.model_type = "llama"
 
     kwargs = {
         "dataset": "custom_dataset",
-        "custom_dataset.file": "recipes/quickstart/finetuning/datasets/custom_dataset.py:get_unknown_dataset",
+        "custom_dataset.file": "getting-started/finetuning/datasets/custom_dataset.py:get_unknown_dataset",
         "batch_size_training": 1,
         "use_peft": False,
         }
     with pytest.raises(AttributeError):
         main(**kwargs)
+
+@pytest.mark.skip_missing_tokenizer
+@patch('llama_cookbook.finetuning.AutoTokenizer')
+def test_tokenize_dialog(tokenizer, monkeypatch, setup_tokenizer, llama_version):
+    monkeypatch.syspath_prepend("getting-started/finetuning/datasets/")
+    from custom_dataset import tokenize_dialog
+
+    setup_tokenizer(tokenizer)
+    tokenizer = tokenizer.from_pretrained()
+
+    dialog = [
+        {"role":"user", "content":"Who made Berlin?"},
+        {"role":"assistant", "content":"dunno"},
+        {"role":"user", "content":"And Rome?"},
+        {"role":"assistant", "content":"Romans"},
+    ]
+
+    c = pytest.raises(AttributeError) if llama_version == "fake_llama" else nullcontext()
+
+    with c:
+        result = tokenize_dialog(dialog, tokenizer)
+    
+    if "Llama-2" in llama_version:
+        assert result["labels"][:12] == [-100] * 12
+        assert result["labels"][17:28] == [-100] * 11
+        assert result["labels"].count(-100) == 11 + 12
+    elif "Llama-3" in llama_version:
+        assert result["labels"][:38] == [-100] * 38
+        assert result["labels"][43:54] == [-100] * 11
+        assert result["labels"].count(-100) == 38 + 11
