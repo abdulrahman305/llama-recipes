@@ -1,0 +1,5 @@
+transformers
+rouge
+xopen
+needlehaystack
+langchain-community>=0.2.10 # not directly required, pinned by Snyk to avoid a vulnerability
