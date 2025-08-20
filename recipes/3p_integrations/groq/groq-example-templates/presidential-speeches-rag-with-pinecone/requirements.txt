@@ -1,0 +1,9 @@
+pandas
+numpy
+groq
+langchain_community
+langchain_pinecone
+transformers
+scikit-learn
+sentence-transformers
+aiohttp>=3.10.11 # not directly required, pinned by Snyk to avoid a vulnerability
