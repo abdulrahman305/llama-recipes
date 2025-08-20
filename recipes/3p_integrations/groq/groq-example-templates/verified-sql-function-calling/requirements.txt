@@ -1,0 +1,10 @@
+groq
+sentence-transformers
+langchain_community
+scikit-learn
+numpy
+duckdb
+pyyaml
+sqlparse
+tabulate
+transformers>=4.50.0 # not directly required, pinned by Snyk to avoid a vulnerability
