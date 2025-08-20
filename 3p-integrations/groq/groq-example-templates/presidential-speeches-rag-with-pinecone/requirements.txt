@@ -1,0 +1,9 @@
+pandas
+numpy
+groq
+langchain_community
+langchain_pinecone
+transformers
+scikit-learn
+sentence-transformers
+requests>=2.32.4 # not directly required, pinned by Snyk to avoid a vulnerability
