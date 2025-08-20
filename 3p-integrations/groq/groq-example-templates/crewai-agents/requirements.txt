@@ -1,3 +1,4 @@
 crewai
 langchain_groq
 pandas
+litellm>=1.65.5 # not directly required, pinned by Snyk to avoid a vulnerability
